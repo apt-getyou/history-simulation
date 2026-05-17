@@ -125,7 +125,47 @@ protagonist_age = start_date - protagonist.birth_year
 | 14 <= age < 17 | `growth_adolescence` | 少年期：有限决策，月推进 |
 | age >= 17 | `standard` | 成年：完整决策权 |
 
-当 `simulation_mode` 不为 `standard` 时，必须额外确认以下字段：
+当 `simulation_mode` 不为 `standard` 时，**必须**执行以下两个子步骤：
+
+##### 0.2.1 时间点意图追问
+
+主角年龄过小意味着可操作空间有限，用户选择此时间点可能有其特殊考虑。**必须**追问用户以下问题：
+
+**问题 1：为什么选择这个早期时间点？**
+
+要求用户说明选择理由。例如：
+- 想从主角视角经历某个历史名场面（如截江救阿斗）
+- 想通过童年经历塑造与史实不同的性格走向
+- 想利用幼年身份的特殊信息渠道（旁观者视角、被大人忽略的密谈）
+- 其他特殊想法
+
+**问题 2：你期望幼年/童年阶段的游戏体验是什么？**
+
+三选一：
+
+| 选项 | 标识 | 说明 |
+|------|------|------|
+| 快速跳过 | `montage` | 成长期以蒙太奇方式快进，仅保留关键转折点的简要叙述，尽快推进到有决策能力的年龄 |
+| 沉浸体验 | `immersive` | 每段成长都有互动，性格养成过程本身是核心玩法，周密还原成长环境 |
+| 关键节点 | `milestone` | 仅在重大人生事件（丧亲、遇险、拜师、初战等）时有互动选择，其余时间自动快进 |
+
+将用户回答记入 `generation-brief.md` 的 `start_point_intent` 字段：
+
+```yaml
+start_point_intent:
+  reason: "用户自由文本，说明选择此时间点的原因"
+  childhood_experience: "montage" | "immersive" | "milestone"
+  intent_notes: "任何额外的玩法期望或特殊想法（可为空）"
+```
+
+**此字段的用途**：`start_point_intent` 影响后续所有阶段的处理策略：
+- **Phase 1 数据收集**：`montage` 模式下幼年期的外部事件细节可粗略收集；`immersive` 模式下需详尽收集成长环境、监护人言行、同时期小事件
+- **Phase 3 提炼**：`reason` 中的用户意图决定哪些要素需要重点提炼
+- **Phase 6 生成**：`childhood_experience` 决定开场场景的写法和幼年期的回合推进节奏
+
+##### 0.2.2 成长参数确认
+
+确认以下字段：
 
 | 字段 | 说明 | 默认值 |
 |------|------|--------|
@@ -134,7 +174,7 @@ protagonist_age = start_date - protagonist.birth_year
 | `growth_initial_personality` | 性格维度初始值（JSON） | 所有维度默认 50 |
 | `growth_milestones` | 关键成长里程碑（用户自定义） | `[]` |
 
-将 `simulation_mode` 写入 `generation-brief.md`。当值为 `growth_*` 时，后续阶段需启用成长模式分支（详见各阶段文件）。
+将 `simulation_mode` 和 `start_point_intent` 一并写入 `generation-brief.md`。当 `simulation_mode` 为 `growth_*` 时，后续阶段需启用成长模式分支（详见各阶段文件）。
 
 #### 地图配置默认值
 
