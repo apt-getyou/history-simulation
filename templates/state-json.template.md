@@ -58,7 +58,39 @@
           "renewable": true,
           "note": "主角直属情报人员"
         }
-      ]
+      ],
+      "growth": {
+        "age": 0,
+        "birth_year": "{{protagonist_birth_year}}",
+        "stage": "infancy|childhood|adolescence|youth|adult",
+        "decision_capacity": "none|minimal|limited|most|full",
+        "personality": {
+          "courage": 50,
+          "caution": 50,
+          "benevolence": 50,
+          "decisiveness": 50,
+          "trust": 50,
+          "wisdom": 50,
+          "resilience": 50
+        },
+        "education_progress": [
+          {
+            "educator": "",
+            "subject": "",
+            "quarters_studied": 0,
+            "effects_accumulated": {}
+          }
+        ],
+        "milestones_reached": [
+          {
+            "id": "",
+            "name": "",
+            "date": "",
+            "type": "",
+            "effects": {}
+          }
+        ]
+      }
     },
     "knowledge": {
       "known": [],
@@ -285,6 +317,7 @@
 |---|---|---|
 | `protagonist.status.prestige` | 主角 | 威望 |
 | `protagonist.status.health` | 主角 | 健康 |
+| `protagonist.status.growth` | 主角成长 | 成长系统（仅 growth 模式） |
 | `protagonist.status.available_resources` | 主角 | 可用资源 |
 | `protagonist.knowledge.known` | 情报 | 主角已知 |
 | `protagonist.knowledge.suspected` | 情报 | 未证实传闻 |
@@ -418,7 +451,7 @@ GM 视角包含主角视角的全部数据，额外加上：
 
 **维护原则**：
 
-1. `characters` 数组每个条目只包含: name, identity, faction, attitude, public_goal, player_visible, stance, recent_action_hint
+1. `characters` 数组每个条目**必须**包含以下字段：name, identity, faction, attitude, public_goal, player_visible, stance, recent_action_hint。缺一不可。
 2. 每回合结算后，只更新本回合经历了重大事件的人物的 `stance`、`attitude`、`recent_action_hint`
 3. 新人物出场时：同步在 `characters/active/` 创建完整人物卡，并在 `characters` 数组中添加摘要条目
 4. 人物死亡时：从 `characters` 数组移除，人物卡移入 `characters/archive/`
@@ -436,9 +469,12 @@ GM 视角包含主角视角的全部数据，额外加上：
 - `protagonist.knowledge` 的内容必须严格遵循知晓模型，不能超出主角应知范围
 - `gm_only` 的内容不能泄漏到主角视角的任何字段中
 - `characters` 中 `player_visible` 的判定必须基于知晓模型的信息层级
+- `characters` 数组中每个条目必须包含全部8个必填字段（name, identity, faction, attitude, public_goal, player_visible, stance, recent_action_hint）
 - `territory` 中各区域的 `visibility` 必须与知晓模型一致
+- `territory.regions` 的数量必须与 `references/04-faction-map.md` 和 `references/12-geography-layer.md` 中定义的区域数量一致
 - `world_crops` 中未引入的作物不能出现在 `available_crops` 中
 - `known_world` 的范围必须与地图扩展进度一致
+- **成长模式**：当 `protagonist.status.growth` 存在时，`stage` 必须与主角当前年龄对应，`personality` 维度数必须与成长系统定义的维度数一致
 
 ## 使用说明
 

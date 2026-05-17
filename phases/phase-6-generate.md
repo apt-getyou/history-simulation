@@ -39,6 +39,24 @@
 
 ## 执行模式
 
+### 成长模式适配
+
+当 `data/generation-brief.md` 中 `simulation_mode` 不为 `standard` 时，Phase 6 需额外执行以下操作：
+
+1. **额外生成文件**：
+   - `references/growth-system.md`（从 `templates/growth-system.template.md` 生成，填充具体数据）
+   - `references/growth-event-pool.md`（从 `templates/growth-event-pool.template.md` 生成，填充具体事件）
+
+2. **修改已有文件**：
+   - `SKILL.md`：添加 `references/growth-system.md` 到硬规则引用列表（替换 `{{growth_system_reference}}`）
+   - `references/08-session-protocol.md`：添加成长模式回合规则段落（替换 `{{growth_mode_section}}`）
+   - `state.json`：填充 `protagonist.status.growth` 字段
+   - `references/12-geography-layer.md`：添加 L0 个人活动空间定义
+
+3. **人物卡适配**：
+   - 幼年主角的人物卡增加 `## 教育者角色` 段落，标注该人物对主角的教育作用
+   - 增加虚拟"玩伴"角色到 waiting/ 池（如适用）
+
 Phase 6 支持两种执行模式，由 `data/generation-brief.md` 中的 `execution_strategy.mode` 决定。
 
 ### 模式一：直接执行（默认）
@@ -152,6 +170,13 @@ subagent 完成后由主控统一更新为 `"completed"`。
 | `state.json` | `data/distilled/` 开场状态 | `templates/state-json.template.md` |
 | `data/driver-skill.md` | `data/generation-brief.md` | `templates/driver-skill.template.md` |
 | `README.md` | `data/generation-brief.md` | `templates/simulator-readme.template.md` |
+
+**成长模式额外文件**（当 `simulation_mode != "standard"` 时）：
+
+| 文件 | 数据来源 | 模板 |
+|------|---------|------|
+| `references/growth-system.md` | `data/generation-brief.md` + 成长原则 | `templates/growth-system.template.md` |
+| `references/growth-event-pool.md` | 年龄阶段 + 历史背景 | `templates/growth-event-pool.template.md` |
 
 **`data/driver-skill.md` 生成要求**：
 

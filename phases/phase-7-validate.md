@@ -20,7 +20,7 @@
   "status": "in_progress",
   "started_at": "{{ISO8601}}",
   "subtasks": {
-    "checks_total": 34,
+    "checks_total": 45,
     "checks_passed": 0,
     "checks_failed": 0,
     "fixes_applied": 0
@@ -93,6 +93,27 @@
 |---|--------|---------|
 | 33 | 完结条件 | 有明确的胜利/失败/时间上限 |
 | 34 | 人物池隔离 | 活跃池/等待池/归档池分离（阶段 3.4 执行时） |
+
+### 成长模式检查（当 simulation_mode != standard 时）
+
+| # | 检查项 | 检查内容 |
+|---|--------|---------|
+| 35 | 成长系统文件 | `references/growth-system.md` 存在且包含所有必填段（年龄阶段表、性格维度、教育系统、里程碑） |
+| 36 | 成长事件池 | `references/growth-event-pool.md` 存在，且每个年龄阶段至少5个事件 |
+| 37 | state.json growth 字段 | `protagonist.status.growth` 存在且 `stage` 与主角年龄一致 |
+| 38 | 性格维度完整 | `growth.personality` 包含的维度名与成长系统定义一致 |
+| 39 | 教师匹配 | `growth.education_progress` 中的教师在 `characters/active/` 中有对应卡片 |
+| 40 | L0 空间定义 | `references/12-geography-layer.md` 包含 L0 个人活动空间定义 |
+| 41 | 回合适配 | `references/08-session-protocol.md` 包含成长模式回合规则段落 |
+
+### Schema 一致性检查
+
+| # | 检查项 | 检查内容 |
+|---|--------|---------|
+| 42 | characters 字段完整 | `state.json` 的 `characters` 数组中每个条目包含全部8个必填字段 |
+| 43 | territory 区域完整 | `state.json` 的 `territory.regions` 数量 >= `references/04-faction-map.md` 中定义的区域数量 |
+| 44 | factions 关系完整 | 每个势力在 `state.json` 和 `references/04-faction-map.md` 中的关系矩阵一致 |
+| 45 | SKILL.md 引用完整 | SKILL.md 中列出的所有规则文件都存在于 `references/` 目录 |
 
 ## 流程
 

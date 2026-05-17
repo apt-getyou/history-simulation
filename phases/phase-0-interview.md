@@ -108,6 +108,34 @@
 | `time_limit` | 时间上限 | 主角自然寿命 |
 | `protagonist_death_is_end` | 主角死亡是否结局 | `true` |
 
+#### 主角年龄与成长模式检测
+
+确认主角信息后，**必须**计算主角在 `start_date` 时的年龄：
+
+```
+protagonist_age = start_date - protagonist.birth_year
+```
+
+根据年龄判断模拟模式：
+
+| 条件 | simulation_mode | 说明 |
+|------|----------------|------|
+| age < 7 | `growth_infancy` | 幼年期：无决策能力，季度/半年推进 |
+| 7 <= age < 14 | `growth_childhood` | 童年期：微小决策，季度推进 |
+| 14 <= age < 17 | `growth_adolescence` | 少年期：有限决策，月推进 |
+| age >= 17 | `standard` | 成年：完整决策权 |
+
+当 `simulation_mode` 不为 `standard` 时，必须额外确认以下字段：
+
+| 字段 | 说明 | 默认值 |
+|------|------|--------|
+| `growth_personality_dimensions` | 性格维度名称列表 | `["courage", "caution", "benevolence", "decisiveness", "trust", "wisdom", "resilience"]` |
+| `growth_educators` | 初始教师/监护人列表 | 从 active 人物中自动匹配 |
+| `growth_initial_personality` | 性格维度初始值（JSON） | 所有维度默认 50 |
+| `growth_milestones` | 关键成长里程碑（用户自定义） | `[]` |
+
+将 `simulation_mode` 写入 `generation-brief.md`。当值为 `growth_*` 时，后续阶段需启用成长模式分支（详见各阶段文件）。
+
 #### 地图配置默认值
 
 ```yaml

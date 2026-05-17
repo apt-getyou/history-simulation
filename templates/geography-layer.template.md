@@ -4,6 +4,67 @@
 
 地理底盘是地图系统的 L1 层，定义模拟世界的静态地理信息。生成时确定，运行时只读。
 
+## L0：个人活动空间（成长模式专用）
+
+> 当 `simulation_mode` 不为 `standard` 时，L0 层定义主角在当前年龄阶段可活动的微观空间。随年龄增长自动扩展。
+
+L0 层是地理底盘的最细粒度，描述主角日常生活的空间范围：
+
+```yaml
+personal_space:
+  protagonist_location: "{{主角当前所在地}}"
+
+  # 按年龄阶段定义活动范围
+  scopes:
+    infancy:                    # 0-6岁
+      range: "院落"
+      areas: ["居室", "花园", "后院", "厨房"]
+      visible_elements: ["花草树木", "仆人", "守卫", "天气"]
+      interactable_people: "仅身边人（教师、护卫、侍从）"
+      narrative_focus: "感官体验、安全感、好奇心"
+
+    childhood:                  # 7-12岁
+      range: "府邸"
+      areas: ["居室", "书房", "练武场", "花园", "前厅", "库房"]
+      visible_elements: ["书籍", "武器", "来往官员", "书信", "地图"]
+      interactable_people: "府中所有人 + 来访客人"
+      narrative_focus: "学习、社交、独立探索"
+
+    adolescence:                # 13-16岁
+      range: "城中"
+      areas: ["府邸", "城门", "市集", "军营", "学堂", "官署"]
+      visible_elements: ["百姓", "军队调动", "商业活动", "城市全貌"]
+      interactable_people: "城中所有人"
+      narrative_focus: "社会观察、身份认同、独立行动"
+
+    youth_and_above:            # 17+岁
+      range: "全势力范围"
+      areas: "所有可达区域"
+      visible_elements: "全部"
+      interactable_people: "全部"
+      narrative_focus: "决策、责任、代价"
+```
+
+**L0 层使用规则**：
+
+1. GM 根据主角当前年龄阶段选择对应的 scope
+2. 叙事描写应限制在 scope.areas 范围内
+3. scope.visible_elements 限定主角可感知的事物
+4. scope.interactable_people 限定主角可互动的人物
+5. 阶段转换时自动扩展范围
+6. 如果主角因特殊事件（如搬迁、逃亡）离开原定位置，L0 层需重新定义
+
+**L0 与 L1-L3 的关系**：
+
+| 层级 | 名称 | 粒度 | 用途 |
+|------|------|------|------|
+| L0 | 个人空间 | 房间/建筑/城区 | 幼年主角叙事范围 |
+| L1 | 静态地理 | 州/郡 | 地形、资源、关隘 |
+| L2 | 动态领土 | 州/郡 | 势力控制状态 |
+| L3 | 可见性 | 区域 | 主角已知/未知区域 |
+
+L0 层只在成长模式下激活。成年主角（age >= 17）跳过 L0，直接使用 L1-L3。
+
 ## 区域定义
 
 每个区域至少包含以下属性：
