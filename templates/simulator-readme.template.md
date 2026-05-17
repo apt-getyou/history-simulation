@@ -123,10 +123,11 @@
 │   ├── 09-opening-state.md      # 开场状态
 │   ├── 10-source-ledger.md      # 来源账本
 │   ├── 11-knowledge-model.md    # 知晓模型
-│   ├── 12-geography-layer.md    # 地理底盘
-│   ├── 13-territory-layer.md    # 领土控制
-│   ├── 14-map-expansion.md      # 地图扩展
-│   └── 15-commodity-timeline.md # 物产时间线
+│   ├── 12-save-system.md        # 保存与回档系统
+│   ├── 13-geography-layer.md    # 地理底盘
+│   ├── 14-territory-layer.md    # 领土控制
+│   ├── 15-map-expansion.md      # 地图扩展
+│   └── 16-commodity-timeline.md # 物产时间线
 ├── characters/           # 人物卡
 │   ├── overview.md       # 人物总览表（常驻上下文）
 │   ├── active/           # 活跃人物完整卡
@@ -140,7 +141,12 @@
 ├── scripts/              # 运行时脚本（可选）
 │   ├── turn-engine.mjs   # 回合结算引擎
 │   ├── record-writer.mjs # 记录写入器
+│   ├── save-manager.mjs  # 存档管理器
 │   └── event-triggers.json # 事件触发条件
+├── saves/                # 存档系统
+│   ├── auto/             # 自动存档（每回合）
+│   ├── manual/           # 手动存档（玩家命名）
+│   └── rollback-snapshots/ # 回档安全快照
 └── data/
     └── driver-skill.md   # 驱动器配置
 ```

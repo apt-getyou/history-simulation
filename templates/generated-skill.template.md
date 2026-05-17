@@ -26,6 +26,7 @@ description: 围绕 {{sim_name}} 运行的历史模拟器。适用于用户要�
 - `references/09-opening-state.md`
 - `references/10-source-ledger.md`
 - `references/11-knowledge-model.md`
+- `references/12-save-system.md`
 
 {{growth_system_reference}}
 
@@ -138,6 +139,7 @@ node scripts/create-character.mjs --sim-dir . --name "X" --complete --attrs attr
 12. **人物卡变更写回**：本回合经历了重大事件的人物，更新其文件
 13. 写入 `state.json`，供仪表盘展示
 14. **完结条件检查**：检查主角是否死亡、胜利/失败条件是否达成、时间上限是否到达。满足任一则进入完结结算。
+15. **自动存档**：将当前状态保存到 `saves/auto/turn-{N}/`，保留最近 10 个自动存档。详见 `references/12-save-system.md`。
 
 ## 完结系统
 
@@ -253,3 +255,40 @@ node scripts/create-character.mjs --sim-dir . --name "X" --complete --attrs attr
 按 `records/session-record-template.md` 的结构追加本回合内容。
 
 隐藏行动按 `records/private-ledger-template.md` 分人物或分势力记录，不直接展示给玩家。
+
+## 保存与回档
+
+完整的存档/读档/回档规则见 `references/12-save-system.md`。
+
+### 快速参考
+
+| 命令 | 操作 |
+|------|------|
+| `存档` / `存档 {name}` | 创建手动存档 |
+| `查看存档` / `存档列表` | 列出所有存档 |
+| `回档` | 显示存档列表供选择 |
+| `回档到第N回合` | 回到指定回合 |
+| `回档到{name}` | 回到指定名称的存档 |
+| `回退N回合` | 从当前往回退N回合 |
+| `撤销回档` | 从安全快照恢复到回档前状态 |
+| `删除存档 {name}` | 删除手动存档 |
+
+### 自动存档
+
+每回合结束后自动存档到 `saves/auto/turn-{N}/`，保留最近 10 个。
+
+### 回档流程
+
+1. 确认回档目标
+2. 自动保存当前状态为安全快照
+3. 从存档恢复 state.json、characters/、.engine-meta.json
+4. 将目标回合之后的记录移至 `records/archived/`
+5. 更新存档索引
+6. 从目标回合继续
+
+### 回档注意事项
+
+- 回档是 state.json 单向输出原则的唯一例外
+- 回档后人物卡和成长状态会恢复到存档时的状态
+- 玩家自己的记忆不恢复（元知识保留）
+- 每次回档前自动创建安全快照，可通过 `撤销回档` 恢复

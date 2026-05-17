@@ -25,9 +25,10 @@
   data/driver-skill.md
   data/event-triggers.json（YAML 事件卡片 → JSON）
   references/07-state-schema.md
-  references/12-geography-layer.md
-  references/13-territory-layer.md
-  references/15-commodity-timeline.md
+  references/12-save-system.md
+  references/13-geography-layer.md
+  references/14-territory-layer.md
+  references/16-commodity-timeline.md
 
 依赖: Python 3.8+，无外部依赖
 """

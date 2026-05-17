@@ -1416,10 +1416,11 @@ generation-brief (状态层)     --> references/07-state-schema.md
 data/distilled/ (开场状态)    --> references/09-opening-state.md
 所有来源数据                  --> references/10-source-ledger.md
 阶段3 时间线切割              --> references/11-knowledge-model.md
-阶段3.6 地理底盘              --> references/12-geography-layer.md
-阶段3.6 + 开场势力分配        --> references/13-territory-layer.md
-阶段3.6 外部世界定义          --> references/14-map-expansion.md
-阶段3.7 物产时间线            --> references/15-commodity-timeline.md
+模板 save-system.template.md  --> references/12-save-system.md
+阶段3.6 地理底盘              --> references/13-geography-layer.md
+阶段3.6 + 开场势力分配        --> references/14-territory-layer.md
+阶段3.6 外部世界定义          --> references/15-map-expansion.md
+阶段3.7 物产时间线            --> references/16-commodity-timeline.md
 ```
 
 ### 6.2 生成文件列表

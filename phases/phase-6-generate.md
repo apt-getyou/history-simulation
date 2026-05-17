@@ -32,7 +32,7 @@
     "6g_records": "pending",
     "6h_characters": "pending",
     "files_generated": [],
-    "files_total": 28
+    "files_total": 32
   }
 }
 ```
@@ -51,7 +51,7 @@
    - `SKILL.md`：添加 `references/growth-system.md` 到硬规则引用列表（替换 `{{growth_system_reference}}`）
    - `references/08-session-protocol.md`：添加成长模式回合规则段落（替换 `{{growth_mode_section}}`）
    - `state.json`：填充 `protagonist.status.growth` 字段
-   - `references/12-geography-layer.md`：添加 L0 个人活动空间定义
+   - `references/13-geography-layer.md`：添加 L0 个人活动空间定义
 
 3. **人物卡适配**：
    - 幼年主角的人物卡增加 `## 教育者角色` 段落，标注该人物对主角的教育作用
@@ -170,6 +170,16 @@ subagent 完成后由主控统一更新为 `"completed"`。
 | `state.json` | `data/distilled/` 开场状态 | `templates/state-json.template.md` |
 | `data/driver-skill.md` | `data/generation-brief.md` | `templates/driver-skill.template.md` |
 | `README.md` | `data/generation-brief.md` | `templates/simulator-readme.template.md` |
+| `scripts/save-manager.mjs` | - | `scripts/save-manager.mjs`（直接复制） |
+| `saves/save-index.json` | - | 初始化空索引 |
+
+**存档系统初始化**：
+
+- 复制 `scripts/save-manager.mjs` 到 `{sim-slug}/scripts/`
+- 创建 `{sim-slug}/saves/` 目录及子目录（`auto/`、`manual/`、`rollback-snapshots/`）
+- 初始化 `saves/save-index.json`（空索引，current_turn = 0）
+- 创建初始存档 `saves/auto/turn-000/`（包含开局 state.json、engine-meta.json、characters/ 快照）
+- 创建 `records/archived/` 目录
 
 **成长模式额外文件**（当 `simulation_mode != "standard"` 时）：
 
@@ -241,14 +251,15 @@ subagent 完成后由主控统一更新为 `"completed"`。
 
 完成后更新进度：`"6e_rules_D": "completed"`
 
-### 子阶段 6f：地图与物产文件
+### 子阶段 6f：存档系统 + 地图与物产文件
 
 | 文件 | 数据来源 | 模板 |
 |------|---------|------|
-| `references/12-geography-layer.md` | `data/distilled/geography-layer.yaml` | `templates/geography-layer.template.md` |
-| `references/13-territory-layer.md` | 地理底盘 + 开场势力分配 | `templates/territory-layer.template.md` |
-| `references/14-map-expansion.md` | 地理底盘外部世界定义 | - |
-| `references/15-commodity-timeline.md` | `data/distilled/commodity-timeline.yaml` | `templates/commodity-timeline.template.md` |
+| `references/12-save-system.md` | - | `templates/save-system.template.md` |
+| `references/13-geography-layer.md` | `data/distilled/geography-layer.yaml` | `templates/geography-layer.template.md` |
+| `references/14-territory-layer.md` | 地理底盘 + 开场势力分配 | `templates/territory-layer.template.md` |
+| `references/15-map-expansion.md` | 地理底盘外部世界定义 | - |
+| `references/16-commodity-timeline.md` | `data/distilled/commodity-timeline.yaml` | `templates/commodity-timeline.template.md` |
 
 完成后更新进度：`"6f_map_commodity": "completed"`
 

@@ -216,6 +216,7 @@ description: 根据指定历史时期、真实人物、主角身份、史实约�
 
 ### 脚本
 - `scripts/collect.py` -- 多源数据收集
+- `scripts/save-manager.mjs` -- 存档管理（自动/手动存档、回档、撤销回档）
 
 ### 模板
 - `templates/generated-skill.template.md`
@@ -231,6 +232,7 @@ description: 根据指定历史时期、真实人物、主角身份、史实约�
 - `templates/state-schema.template.md`
 - `templates/session-record.template.md`
 - `templates/private-ledger.template.md`
+- `templates/save-system.template.md`
 - `templates/dashboard.template.html`
 - `templates/state-json.template.md`
 - `templates/engine-meta.template.md`

@@ -25,6 +25,7 @@
 ├── scripts/                      ← 运行时脚本（可选）
 │   ├── turn-engine.mjs
 │   ├── record-writer.mjs
+│   ├── save-manager.mjs
 │   └── event-triggers.json
 ├── references/
 │   ├── 01-simulator-brief.md
@@ -38,15 +39,22 @@
 │   ├── 09-opening-state.md
 │   ├── 10-source-ledger.md
 │   ├── 11-knowledge-model.md
-│   ├── 12-geography-layer.md
-│   ├── 13-territory-layer.md
-│   ├── 14-map-expansion.md
-│   └── 15-commodity-timeline.md
+│   ├── 12-save-system.md
+│   ├── 13-geography-layer.md
+│   ├── 14-territory-layer.md
+│   ├── 15-map-expansion.md
+│   └── 16-commodity-timeline.md
+├── saves/                        ← 存档系统
+│   ├── save-index.json           ← 存档索引
+│   ├── auto/                     ← 自动存档（每回合）
+│   ├── manual/                   ← 手动存档（玩家命名）
+│   └── rollback-snapshots/       ← 回档安全快照
 └── records/
     ├── ledger/
     │   └── turn-001.md          ← 结构化账本（每回合一个文件）
     ├── chronicle/
     │   └── turn-001.md          ← 小说化叙事（每回合一个文件）
+    ├── archived/                 ← 回档时移出的记录
     ├── session-record-template.md
     └── private-ledger-template.md
 ```
@@ -151,7 +159,7 @@
 - 公共信息
 - 玩家当前已知
 
-### `12-geography-layer.md`
+### `13-geography-layer.md`
 
 地理底盘（L1 层）。
 
@@ -164,7 +172,7 @@
 
 基于 `templates/geography-layer.template.md` 生成。所有地理断言必须有史料或学术来源。
 
-### `13-territory-layer.md`
+### `14-territory-layer.md`
 
 领土控制（L2 层）和可视区域（L3 层）。
 
@@ -178,7 +186,7 @@
 
 基于 `templates/territory-layer.template.md` 生成。开局时根据势力分配初始化控制状态。
 
-### `14-map-expansion.md`
+### `15-map-expansion.md`
 
 地图扩展规则。
 
@@ -192,7 +200,7 @@
 
 仅在 `map_config.outer_world_enabled` 为 true 时生成详细外部世界定义。
 
-### `15-commodity-timeline.md`
+### `16-commodity-timeline.md`
 
 物产引入时间线。
 
@@ -225,9 +233,9 @@
 - 关键历史信息都要能回溯到来源账本
 - 隐藏信息要有明确的暴露条件与知晓路径
 - `.engine-meta.json` 必须携带当前引擎版本号
-- 地理底盘（`12-geography-layer.md`）的区域划分必须基于目标时期的行政区划
-- 领土控制（`13-territory-layer.md`）的开局状态必须与势力分配一致
-- 物产时间线（`15-commodity-timeline.md`）中的作物引入时间必须有学术来源
+- 地理底盘（`13-geography-layer.md`）的区域划分必须基于目标时期的行政区划
+- 领土控制（`14-territory-layer.md`）的开局状态必须与势力分配一致
+- 物产时间线（`16-commodity-timeline.md`）中的作物引入时间必须有学术来源
 - 所有作物获取渠道必须遵守"不能无中生有"原则
 
 ### `dashboard.html`
@@ -286,3 +294,52 @@ Phase 8（交付阶段）会读取此文件，修正路径变量后安装到 AI 
 - 文件结构说明
 
 此文件不参与模拟器运行，仅供用户参考。
+
+### `references/12-save-system.md`
+
+保存与回档系统规则。
+
+基于 `templates/save-system.template.md` 生成。
+
+定义：
+- 存档类型（自动/手动/安全快照）
+- 存档内容（哪些文件需要快照）
+- 存档操作（创建/列出/回档/删除）
+- 回档流程（确认/安全快照/恢复/记录归档）
+- 与 state.json 单向输出原则的关系
+- 与成长系统的交互
+
+### `saves/`
+
+存档系统目录。
+
+- `saves/save-index.json`：存档索引（所有存档的元数据列表）
+- `saves/auto/`：每回合自动存档，保留最近 10 个
+- `saves/manual/`：玩家命名的手动存档，永久保留（上限 20 个）
+- `saves/rollback-snapshots/`：回档前的安全快照，保留最近 3 个
+
+每个存档子目录包含：
+- `save-meta.json`：存档元数据（回合号、日期、描述）
+- `state.json`：完整状态快照
+- `engine-meta.json`：引擎元数据快照
+- `characters/`：人物卡快照（overview.md + active/）
+
+### `records/archived/`
+
+回档时从 `records/ledger/` 和 `records/chronicle/` 移出的记录。
+
+按回档事件组织：`records/archived/rollback-{timestamp}/`
+
+### `scripts/save-manager.mjs`
+
+存档管理脚本（可选）。
+
+基于生成器 `scripts/save-manager.mjs` 复制到目标模拟器。
+
+提供命令行操作：
+- `--auto --turn N`：创建自动存档
+- `--save --name "..."`：创建手动存档
+- `--list`：列出存档
+- `--rollback --turn N`：回档到指定回合
+- `--rollback --name "..."`：回档到指定存档
+- `--delete --name "..."`：删除手动存档

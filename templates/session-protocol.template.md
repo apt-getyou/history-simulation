@@ -77,6 +77,20 @@
 
 {{completion_conditions}}
 
+### 12. 自动存档
+
+每回合结束后自动将当前状态保存到 `saves/auto/turn-{N}/`。详见 `references/12-save-system.md`。
+
+- 复制 `state.json`、`.engine-meta.json`、`characters/` 到存档目录
+- 生成 `save-meta.json`
+- 更新 `saves/save-index.json`
+- 超过 10 个自动存档时删除最旧的
+
+如果 `scripts/save-manager.mjs` 存在，优先使用脚本：
+```bash
+node scripts/save-manager.mjs --sim-dir . --auto --turn {N}
+```
+
 ## 月度结算基线表
 
 以下数值为每回合自动发生的系统变化，不考虑事件和玩家决策的影响。世界主持器在步骤 9 中应用这些基线。

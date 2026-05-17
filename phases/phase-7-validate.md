@@ -79,7 +79,7 @@
 
 | # | 检查项 | 检查内容 |
 |---|--------|---------|
-| 26 | 领土一致性 | 势力控制区域在 `13-territory-layer.md` 和 `04-faction-map.md` 中一致 |
+| 26 | 领土一致性 | 势力控制区域在 `14-territory-layer.md` 和 `04-faction-map.md` 中一致 |
 | 27 | 地形联动 | 天气影响、军事结算、财政产出已与地形属性关联 |
 | 28 | 物产合理性 | 没有超出该时期可获取范围的作物 |
 | 29 | 作物引入链路 | 每种已引入作物都有获取渠道记录 |
@@ -103,7 +103,7 @@
 | 37 | state.json growth 字段 | `protagonist.status.growth` 存在且 `stage` 与主角年龄一致 |
 | 38 | 性格维度完整 | `growth.personality` 包含的维度名与成长系统定义一致 |
 | 39 | 教师匹配 | `growth.education_progress` 中的教师在 `characters/active/` 中有对应卡片 |
-| 40 | L0 空间定义 | `references/12-geography-layer.md` 包含 L0 个人活动空间定义 |
+| 40 | L0 空间定义 | `references/13-geography-layer.md` 包含 L0 个人活动空间定义 |
 | 41 | 回合适配 | `references/08-session-protocol.md` 包含成长模式回合规则段落 |
 
 ### Schema 一致性检查
@@ -134,7 +134,7 @@
 
 ## 失败项（2/25）
 
-- [ ] 18. 领土一致性 -- `04-faction-map.md` 中荆州标注为刘备控制，但 `13-territory-layer.md` 中荆州归属曹操
+- [ ] 18. 领土一致性 -- `04-faction-map.md` 中荆州标注为刘备控制，但 `14-territory-layer.md` 中荆州归属曹操
 - [ ] 22. 穿越者约束 -- `08-session-protocol.md` 中穿越者可直接获取土豆，未要求打通渠道
 
 ## 修复计划
@@ -208,7 +208,7 @@ Phase 8 交付汇报完成后，由主控启动。参见 `phases/phase-8-deliver
    - `dashboard.html`
    - `README.md`
    - `characters/overview.md`
-   - `references/01-simulator-brief.md` 至 `15-commodity-timeline.md`（15个文件）
+   - `references/01-simulator-brief.md` 至 `16-commodity-timeline.md`（16个文件）
    - `records/ledger-template.md`, `chronicle-template.md`, `session-record-template.md`, `private-ledger-template.md`
 4. 检查人物卡数量：
    - 列出 `characters/active/` 中的 .md 文件，与 character-inventory.md 中 active 状态人物对比

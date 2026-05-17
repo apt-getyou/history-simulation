@@ -471,7 +471,7 @@ GM 视角包含主角视角的全部数据，额外加上：
 - `characters` 中 `player_visible` 的判定必须基于知晓模型的信息层级
 - `characters` 数组中每个条目必须包含全部8个必填字段（name, identity, faction, attitude, public_goal, player_visible, stance, recent_action_hint）
 - `territory` 中各区域的 `visibility` 必须与知晓模型一致
-- `territory.regions` 的数量必须与 `references/04-faction-map.md` 和 `references/12-geography-layer.md` 中定义的区域数量一致
+- `territory.regions` 的数量必须与 `references/04-faction-map.md` 和 `references/13-geography-layer.md` 中定义的区域数量一致
 - `world_crops` 中未引入的作物不能出现在 `available_crops` 中
 - `known_world` 的范围必须与地图扩展进度一致
 - **成长模式**：当 `protagonist.status.growth` 存在时，`stage` 必须与主角当前年龄对应，`personality` 维度数必须与成长系统定义的维度数一致
@@ -484,8 +484,8 @@ GM 视角包含主角视角的全部数据，额外加上：
 2. 根据 `09-opening-state.md` 填充初始值
 3. 根据 `03-cast-registry.md` 初始化 `characters` 数组
 4. 根据 `04-faction-map.md` 初始化 `factions` 数组（含领土信息）
-5. 根据 `12-geography-layer.md` 和 `13-territory-layer.md` 初始化 `territory` 数组
-6. 根据 `15-commodity-timeline.md` 初始化 `world_crops` 和 `known_world`
+5. 根据 `13-geography-layer.md` 和 `14-territory-layer.md` 初始化 `territory` 数组
+6. 根据 `16-commodity-timeline.md` 初始化 `world_crops` 和 `known_world`
 7. 删除本说明文件，保留生成的 `state.json` 作为运行时数据
 
 ### 运行时

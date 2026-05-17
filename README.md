@@ -421,14 +421,15 @@ AI 直接阅读原始史料进行语义级冲突检测。识别不同来源间�
 | `references/10-source-ledger.md` | **来源账本**。每个断言的溯源表：断言 ID(`A{NNN}` 证据支持 / `I{NNN}` 推断)、来源层级(A/B)、具体引用、原文、用途、置信度、偏倚注记、叙述依赖标记、争议注记 |
 | `references/11-knowledge-model.md` | **知晓模型**。五级信息分层(global_truth/private_known/faction_known/public_known/player_known)、八个主角信息渠道（亲眼见/奏报/密报/巡查/审计/审讯/传闻/事件暴露）、信息到达延迟规则、可靠性衰减（延迟 2+ 回合时准确率递减） |
 
-#### 6f - 地图与物产文件
+#### 6f - 存档系统 + 地图与物产文件
 
 | 文件路径 | 内容说明 |
 |---------|---------|
-| `references/12-geography-layer.md` | **地理层（L1 静态）**。从 data/distilled/geography-layer.yaml 转化。区域定义 YAML + 7 种地形系统影响表 + 区域关系邻接图。运行时只读 |
-| `references/13-territory-layer.md` | **领土层（L2 动态 + L3 可见度）**。L2 每回合更新的领土控制（控制强度 0-1、五档分级、驻军/民心/税率、攻防结算流程）；L3 认知边界（四级可见度：完整/部分/模糊/未知 + 五种提升渠道 + 主角位置自动完整可见） |
-| `references/14-map-expansion.md` | **地图扩张规则**。三步流程：发现（听说外部区域）-> 接触（派遣使节/商队）-> 整合（持续交流纳入已知世界）。地图扩张是获取外部物产的前提 |
-| `references/15-commodity-timeline.md` | **物产时间线**。从 data/distilled/commodity-timeline.yaml 转化。作物时间线 + 获取渠道机制 + 时期-作物可行性矩阵 + 世界影响量化（高产作物 +30-50% 人口承载力） |
+| `references/12-save-system.md` | **保存与回档系统**。自动存档（每回合）/ 手动存档（玩家命名）/ 回档安全快照。存档内容为 state.json + characters/ + engine-meta.json 快照 |
+| `references/13-geography-layer.md` | **地理层（L1 静态）**。从 data/distilled/geography-layer.yaml 转化。区域定义 YAML + 7 种地形系统影响表 + 区域关系邻接图。运行时只读 |
+| `references/14-territory-layer.md` | **领土层（L2 动态 + L3 可见度）**。L2 每回合更新的领土控制（控制强度 0-1、五档分级、驻军/民心/税率、攻防结算流程）；L3 认知边界（四级可见度：完整/部分/模糊/未知 + 五种提升渠道 + 主角位置自动完整可见） |
+| `references/15-map-expansion.md` | **地图扩张规则**。三步流程：发现（听说外部区域）-> 接触（派遣使节/商队）-> 整合（持续交流纳入已知世界）。地图扩张是获取外部物产的前提 |
+| `references/16-commodity-timeline.md` | **物产时间线**。从 data/distilled/commodity-timeline.yaml 转化。作物时间线 + 获取渠道机制 + 时期-作物可行性矩阵 + 世界影响量化（高产作物 +30-50% 人口承载力） |
 
 #### 6g - 记录模板
 
@@ -631,10 +632,11 @@ AI 直接阅读原始史料进行语义级冲突检测。识别不同来源间�
 │   ├── 09-opening-state.md         # 开局状态
 │   ├── 10-source-ledger.md         # 来源账本
 │   ├── 11-knowledge-model.md       # 知晓模型
-│   ├── 12-geography-layer.md       # 地理层
-│   ├── 13-territory-layer.md       # 领土层
-│   ├── 14-map-expansion.md         # 地图扩张
-│   └── 15-commodity-timeline.md    # 物产时间线
+│   ├── 12-save-system.md            # 保存与回档系统
+│   ├── 13-geography-layer.md       # 地理层
+│   ├── 14-territory-layer.md       # 领土层
+│   ├── 15-map-expansion.md         # 地图扩张
+│   └── 16-commodity-timeline.md    # 物产时间线
 ├── records/
 │   ├── ledger-template.md          # 账本模板
 │   ├── chronicle-template.md       # 编年史模板
@@ -644,6 +646,7 @@ AI 直接阅读原始史料进行语义级冲突检测。识别不同来源间�
     ├── create-character.mjs        # 运行时人物创建
     ├── turn-engine.mjs             # 回合引擎
     ├── record-writer.mjs           # 记录写入
+    ├── save-manager.mjs            # 存档管理
     └── info-delay.mjs              # 信息延迟计算
 ```
 
@@ -696,6 +699,7 @@ AI 直接阅读原始史料进行语义级冲突检测。识别不同来源间�
 | `scripts/turn-engine.mjs` | 回合引擎（运行时） |
 | `scripts/record-writer.mjs` | 记录写入（运行时） |
 | `scripts/create-character.mjs` | 人物创建（运行时） |
+| `scripts/save-manager.mjs` | 存档管理（运行时：自动/手动存档、回档、撤销回档） |
 | `scripts/info-delay.mjs` | 信息延迟计算（运行时） |
 | `scripts/validator.py` | 一致性验证（Phase 7） |
 | `scripts/event-validator.py` | 事件验证（Phase 7） |
