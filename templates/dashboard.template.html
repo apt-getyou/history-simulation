@@ -1,0 +1,1496 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{sim_name}} - 仪表盘</title>
+<style>
+/* ===== Reset & Base ===== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg-primary: #1a1a2e;
+  --bg-secondary: #16213e;
+  --bg-card: #0f3460;
+  --bg-card-alt: #1a1a3e;
+  --border-color: #2a4a7f;
+  --border-glow: #4a8af5;
+  --text-primary: #e0e0e0;
+  --text-secondary: #a0a0b0;
+  --text-dim: #6a6a7a;
+  --accent-gold: #d4a853;
+  --accent-red: #e74c3c;
+  --accent-green: #2ecc71;
+  --accent-blue: #3498db;
+  --accent-purple: #9b59b6;
+  --accent-orange: #e67e22;
+  --accent-teal: #1abc9c;
+  --bar-bg: #2a2a4a;
+  --danger: #e74c3c;
+  --warning: #f39c12;
+  --safe: #2ecc71;
+  --gm-bg: #2d1b2e;
+  --gm-border: #8e44ad;
+}
+body {
+  font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  min-height: 100vh;
+  line-height: 1.5;
+}
+
+/* ===== Layout ===== */
+.dashboard {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  height: 100vh;
+  gap: 4px;
+  padding: 4px;
+}
+
+/* ===== Header Bar ===== */
+.header {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  padding: 6px 12px;
+}
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.sim-title {
+  font-size: 16px;
+  font-weight: bold;
+  color: var(--accent-gold);
+  letter-spacing: 2px;
+}
+.date-display {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+.weather-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--bg-card);
+  padding: 2px 8px;
+  border-radius: 3px;
+  font-size: 12px;
+}
+.header-center {
+  text-align: center;
+}
+.turn-counter {
+  font-size: 13px;
+  color: var(--accent-blue);
+}
+.header-right {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+}
+.view-toggle {
+  display: flex;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.view-btn {
+  padding: 4px 12px;
+  font-size: 12px;
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.view-btn.active {
+  background: var(--accent-blue);
+  color: #fff;
+}
+.view-btn:hover:not(.active) {
+  background: var(--border-color);
+}
+.view-btn.gm-btn {
+  position: relative;
+  user-select: none;
+  -webkit-user-select: none;
+  overflow: hidden;
+}
+.view-btn.gm-btn .gm-progress {
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 0%;
+  background: rgba(155,89,182,0.4);
+  transition: none;
+  pointer-events: none;
+}
+.view-btn.gm-btn.holding .gm-progress {
+  transition: width 3s linear;
+  width: 100%;
+}
+.view-btn.gm-btn .gm-label { position: relative; z-index: 1; }
+.view-btn.gm-btn .gm-hint {
+  display: none;
+  position: absolute;
+  top: -22px;
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  font-size: 9px;
+  color: var(--accent-red);
+  background: rgba(30,30,30,0.95);
+  padding: 2px 6px;
+  border-radius: 3px;
+  pointer-events: none;
+  z-index: 2;
+}
+.view-btn.gm-btn.holding .gm-hint { display: block; }
+.view-btn.gm-btn .gm-cancel {
+  display: none;
+  position: relative;
+  z-index: 1;
+  font-size: 9px;
+  color: var(--text-dim);
+  margin-left: 4px;
+}
+.view-btn.gm-btn.holding .gm-cancel { display: inline; }
+.refresh-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--safe);
+  animation: pulse 2s infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+/* ===== Main Content ===== */
+.main-content {
+  display: grid;
+  grid-template-columns: 220px 1fr 240px;
+  grid-template-rows: 1fr 1fr 1fr;
+  gap: 4px;
+  overflow: hidden;
+}
+
+/* ===== Panels ===== */
+.panel {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.panel-title {
+  font-size: 12px;
+  font-weight: bold;
+  color: var(--accent-gold);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  padding: 6px 10px;
+  background: rgba(212, 168, 83, 0.1);
+  border-bottom: 1px solid var(--border-color);
+  flex-shrink: 0;
+}
+.panel-body {
+  padding: 8px 10px;
+  overflow-y: auto;
+  flex: 1;
+}
+.panel-body::-webkit-scrollbar { width: 4px; }
+.panel-body::-webkit-scrollbar-track { background: transparent; }
+.panel-body::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 2px; }
+
+/* ===== Protagonist Panel (left column, full height) ===== */
+.protagonist-panel {
+  grid-row: 1 / 4;
+}
+.protag-name {
+  font-size: 15px;
+  font-weight: bold;
+  color: var(--accent-gold);
+  margin-bottom: 2px;
+}
+.protag-identity {
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+}
+.protag-location {
+  font-size: 11px;
+  color: var(--text-dim);
+  margin-bottom: 8px;
+}
+.protag-resources {
+  font-size: 12px;
+  color: var(--text-primary);
+  padding: 4px 6px;
+  background: var(--bg-card);
+  border-radius: 3px;
+  margin-bottom: 8px;
+}
+
+/* ===== Status Bars ===== */
+.status-bar-group { margin-bottom: 8px; }
+.status-bar-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  margin-bottom: 2px;
+}
+.status-bar-label .label { color: var(--text-secondary); }
+.status-bar-label .value { color: var(--text-primary); font-weight: bold; }
+.status-bar-track {
+  height: 8px;
+  background: var(--bar-bg);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.status-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.5s ease;
+}
+.fill-green { background: linear-gradient(90deg, #27ae60, #2ecc71); }
+.fill-yellow { background: linear-gradient(90deg, #f39c12, #e67e22); }
+.fill-red { background: linear-gradient(90deg, #c0392b, #e74c3c); }
+.fill-blue { background: linear-gradient(90deg, #2980b9, #3498db); }
+.fill-purple { background: linear-gradient(90deg, #8e44ad, #9b59b6); }
+.fill-teal { background: linear-gradient(90deg, #16a085, #1abc9c); }
+.fill-orange { background: linear-gradient(90deg, #d35400, #e67e22); }
+
+/* ===== Knowledge Section ===== */
+.knowledge-section { margin-top: 8px; }
+.knowledge-category {
+  margin-bottom: 6px;
+}
+.knowledge-cat-title {
+  font-size: 11px;
+  font-weight: bold;
+  padding: 2px 6px;
+  border-radius: 2px;
+  margin-bottom: 2px;
+}
+.cat-known { background: rgba(46, 204, 113, 0.15); color: var(--accent-green); }
+.cat-suspected { background: rgba(243, 156, 18, 0.15); color: var(--accent-orange); }
+.cat-rumor { background: rgba(155, 89, 182, 0.15); color: var(--accent-purple); }
+.cat-unknown { background: rgba(231, 76, 60, 0.15); color: var(--accent-red); }
+.knowledge-item {
+  font-size: 11px;
+  color: var(--text-secondary);
+  padding: 1px 0 1px 12px;
+  border-left: 2px solid var(--border-color);
+  margin-left: 4px;
+}
+
+/* ===== Domain Grid (center top) ===== */
+.domain-panel {
+  grid-column: 2;
+  grid-row: 1;
+}
+.domain-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+.domain-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  padding: 6px 8px;
+}
+.domain-card-title {
+  font-size: 11px;
+  font-weight: bold;
+  color: var(--accent-blue);
+  margin-bottom: 4px;
+  border-bottom: 1px solid rgba(74, 138, 245, 0.3);
+  padding-bottom: 2px;
+}
+.domain-field {
+  margin-bottom: 4px;
+}
+
+/* ===== Territory Panel (center row 2) ===== */
+.territory-panel {
+  grid-column: 2;
+  grid-row: 2;
+}
+.territory-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+}
+.region-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  padding: 4px 6px;
+  font-size: 11px;
+  transition: border-color 0.2s;
+}
+.region-card:hover { border-color: var(--border-glow); }
+.region-card.firm { border-left: 3px solid var(--safe); }
+.region-card.stable { border-left: 3px solid var(--accent-blue); }
+.region-card.loose { border-left: 3px solid var(--warning); }
+.region-card.nominal { border-left: 3px solid var(--accent-orange); }
+.region-card.lost { border-left: 3px solid var(--accent-red); }
+.region-card.unknown { border-left: 3px solid var(--text-dim); opacity: 0.6; }
+.region-name { font-weight: bold; color: var(--text-primary); }
+.region-controller { color: var(--accent-blue); font-size: 10px; }
+.region-field {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+.region-bar-track {
+  height: 5px;
+  background: var(--bar-bg);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-top: 1px;
+}
+.region-bar-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.5s ease;
+}
+.visibility-tag {
+  display: inline-block;
+  font-size: 9px;
+  padding: 0px 3px;
+  border-radius: 2px;
+  margin-left: 4px;
+}
+.vis-full { background: rgba(46,204,113,0.2); color: var(--accent-green); }
+.vis-partial { background: rgba(52,152,219,0.2); color: var(--accent-blue); }
+.vis-fuzzy { background: rgba(243,156,18,0.2); color: var(--accent-orange); }
+.vis-unknown { background: rgba(106,106,122,0.2); color: var(--text-dim); }
+.kw-badge {
+  display: inline-block;
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 3px;
+  background: var(--bg-card);
+  color: var(--accent-gold);
+  border: 1px solid var(--accent-gold);
+}
+.kw-section {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+.crop-tag {
+  display: inline-block;
+  font-size: 10px;
+  padding: 1px 5px;
+  border-radius: 2px;
+  background: rgba(26,188,156,0.15);
+  color: var(--accent-teal);
+  margin: 1px 2px 1px 0;
+}
+.contact-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 3px;
+  padding: 3px 6px;
+  margin-bottom: 3px;
+  font-size: 10px;
+}
+.contact-name { font-weight: bold; color: var(--accent-teal); }
+.contact-status {
+  display: inline-block;
+  font-size: 9px;
+  padding: 0px 3px;
+  border-radius: 2px;
+}
+.cs-established { background: rgba(46,204,113,0.2); color: var(--accent-green); }
+.cs-contacting { background: rgba(243,156,18,0.2); color: var(--accent-orange); }
+.cs-heard { background: rgba(52,152,219,0.2); color: var(--accent-blue); }
+.cs-unknown { background: rgba(106,106,122,0.2); color: var(--text-dim); }
+.climate-bar {
+  display: inline-block;
+  width: 80px;
+  height: 8px;
+  background: var(--bar-bg);
+  border-radius: 3px;
+  vertical-align: middle;
+  margin-left: 6px;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+.climate-bar-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.5s ease;
+}
+
+/* ===== Character & Faction Panel (center row 3) ===== */
+.relations-panel {
+  grid-column: 2;
+  grid-row: 3;
+}
+.char-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 4px;
+}
+.char-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  padding: 6px 8px;
+  transition: border-color 0.2s;
+}
+.char-card:hover { border-color: var(--border-glow); }
+.char-card.friendly { border-left: 3px solid var(--accent-green); }
+.char-card.hostile { border-left: 3px solid var(--accent-red); }
+.char-card.neutral { border-left: 3px solid var(--accent-blue); }
+.char-name {
+  font-size: 12px;
+  font-weight: bold;
+  color: var(--text-primary);
+}
+.char-identity {
+  font-size: 10px;
+  color: var(--text-dim);
+}
+.char-faction {
+  font-size: 10px;
+  color: var(--accent-purple);
+}
+.char-stance {
+  font-size: 10px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+.char-action-hint {
+  font-size: 10px;
+  color: var(--accent-orange);
+  font-style: italic;
+}
+
+/* ===== Event Log (right column, full height) ===== */
+.event-panel {
+  grid-column: 3;
+  grid-row: 1 / 4;
+}
+.event-entry {
+  padding: 6px 0;
+  border-bottom: 1px solid rgba(42, 74, 127, 0.3);
+}
+.event-entry:last-child { border-bottom: none; }
+.event-turn {
+  font-size: 10px;
+  color: var(--accent-blue);
+  font-weight: bold;
+}
+.event-date {
+  font-size: 10px;
+  color: var(--text-dim);
+}
+.event-summary {
+  font-size: 11px;
+  color: var(--text-primary);
+  margin: 2px 0;
+}
+.event-changes {
+  font-size: 10px;
+  color: var(--text-secondary);
+}
+.event-knowledge {
+  margin-top: 3px;
+}
+.event-intel {
+  font-size: 10px;
+  padding: 1px 4px;
+  border-radius: 2px;
+  margin: 1px 0;
+  display: inline-block;
+}
+.intel-witness { background: rgba(52, 152, 219, 0.2); color: var(--accent-blue); }
+.intel-report { background: rgba(46, 204, 113, 0.2); color: var(--accent-green); }
+.intel-spy { background: rgba(155, 89, 182, 0.2); color: var(--accent-purple); }
+.intel-rumor { background: rgba(243, 156, 18, 0.2); color: var(--accent-orange); }
+
+/* ===== GM-Only Panel ===== */
+.gm-panel {
+  grid-column: 1 / 4;
+  grid-row: 1 / 4;
+  display: none;
+  overflow: hidden;
+}
+.gm-panel.visible { display: flex; flex-direction: column; }
+.gm-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  overflow-y: auto;
+  flex: 1;
+  padding: 4px;
+}
+.gm-card {
+  background: var(--gm-bg);
+  border: 1px solid var(--gm-border);
+  border-radius: 4px;
+  padding: 8px;
+}
+.gm-card-title {
+  font-size: 12px;
+  font-weight: bold;
+  color: var(--accent-purple);
+  margin-bottom: 4px;
+  cursor: pointer;
+  user-select: none;
+}
+.gm-card-title::before { content: "\25BC "; }
+.gm-card-title.collapsed::before { content: "\25B6 "; }
+.gm-card-content { padding-top: 4px; }
+.gm-card-title.collapsed + .gm-card-content { display: none; }
+.gm-actor {
+  font-size: 11px;
+  font-weight: bold;
+  color: var(--accent-orange);
+}
+.gm-action {
+  font-size: 11px;
+  color: var(--text-primary);
+}
+.gm-result {
+  font-size: 11px;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+.gm-condition {
+  font-size: 10px;
+  color: var(--accent-red);
+  padding: 2px 4px;
+  background: rgba(231, 76, 60, 0.1);
+  border-radius: 2px;
+  margin: 2px 0;
+}
+.gm-truth-tier {
+  display: inline-block;
+  font-size: 9px;
+  padding: 1px 4px;
+  border-radius: 2px;
+  margin-right: 4px;
+}
+.tier-global { background: rgba(231, 76, 60, 0.3); color: var(--accent-red); }
+.tier-private { background: rgba(155, 89, 182, 0.3); color: var(--accent-purple); }
+.tier-faction { background: rgba(52, 152, 219, 0.3); color: var(--accent-blue); }
+.tier-public { background: rgba(46, 204, 113, 0.3); color: var(--accent-green); }
+.tier-player { background: rgba(212, 168, 83, 0.3); color: var(--accent-gold); }
+.gm-hidden-list { list-style: none; }
+.gm-hidden-item {
+  font-size: 11px;
+  padding: 4px 0;
+  border-bottom: 1px solid rgba(142, 68, 173, 0.2);
+}
+.gm-exposure-met {
+  color: var(--accent-red);
+  font-weight: bold;
+}
+
+/* ===== Footer ===== */
+.footer {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  padding: 4px 12px;
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--text-dim);
+}
+.state-changes {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.change-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.change-up { color: var(--accent-green); }
+.change-down { color: var(--accent-red); }
+.change-neutral { color: var(--text-secondary); }
+
+/* ===== Responsive ===== */
+.faction-section { margin-top: 8px; }
+.faction-section-title {
+  font-size: 11px;
+  font-weight: bold;
+  color: var(--accent-purple);
+  margin-bottom: 4px;
+  padding-bottom: 2px;
+  border-bottom: 1px solid rgba(155,89,182,0.3);
+}
+.faction-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+}
+.faction-detail-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  padding: 4px 6px;
+}
+.faction-detail-card.friendly { border-left: 3px solid var(--accent-green); }
+.faction-detail-card.hostile { border-left: 3px solid var(--accent-red); }
+.faction-detail-card.neutral { border-left: 3px solid var(--accent-blue); }
+.faction-detail-name { font-size: 11px; font-weight: bold; color: var(--accent-purple); }
+.faction-detail-info { font-size: 10px; color: var(--text-secondary); }
+.faction-detail-regions { font-size: 9px; color: var(--text-dim); }
+.faction-rel-item {
+  display: inline-block;
+  font-size: 9px;
+  padding: 1px 4px;
+  border-radius: 2px;
+  margin: 1px 2px 1px 0;
+}
+.rel-ally { background: rgba(46,204,113,0.2); color: var(--accent-green); }
+.rel-rival { background: rgba(243,156,18,0.2); color: var(--accent-orange); }
+.rel-hostile { background: rgba(231,76,60,0.2); color: var(--accent-red); }
+.rel-neutral { background: rgba(106,106,122,0.2); color: var(--text-dim); }
+
+/* ===== Responsive ===== */
+@media (max-width: 900px) {
+  .main-content {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto;
+  }
+  .protagonist-panel { grid-row: auto; }
+  .territory-panel { grid-column: 1; grid-row: auto; }
+  .event-panel { grid-column: 1; grid-row: auto; }
+  .domain-panel { grid-column: 1; grid-row: auto; }
+  .relations-panel { grid-column: 1; grid-row: auto; }
+  .gm-panel { grid-column: 1; grid-row: auto; }
+  .gm-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<div class="dashboard">
+  <!-- Header -->
+  <div class="header">
+    <div class="header-left">
+      <span class="sim-title" id="simTitle">{{sim_name}}</span>
+      <span class="date-display" id="dateDisplay">--</span>
+      <span class="weather-badge" id="weatherBadge">--</span>
+    </div>
+    <div class="header-center">
+      <span class="turn-counter" id="turnCounter">回合 --</span>
+    </div>
+    <div class="header-right">
+      <div class="view-toggle">
+        <button class="view-btn active" data-view="player" onclick="switchView('player')">主角视角</button>
+        <button class="view-btn gm-btn" data-view="gm" id="gmSwitchBtn"><span class="gm-hint">将暴露所有隐藏信息</span><span class="gm-progress"></span><span class="gm-label">GM 视角</span><span class="gm-cancel">(松开取消)</span></button>
+      </div>
+      <span class="refresh-indicator" id="refreshDot" title="自动刷新中"></span>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="main-content" id="mainContent">
+    <!-- Left: Protagonist Panel -->
+    <div class="panel protagonist-panel" id="protagonistPanel">
+      <div class="panel-title">主角状态</div>
+      <div class="panel-body" id="protagonistBody">
+        <!-- Filled by JS -->
+      </div>
+    </div>
+
+    <!-- Center Top: Domain Status -->
+    <div class="panel domain-panel" id="domainPanel">
+      <div class="panel-title">天下大势</div>
+      <div class="panel-body">
+        <div class="domain-grid" id="domainGrid">
+          <!-- Filled by JS -->
+        </div>
+        <div style="margin-top:8px;">
+          <div style="font-size:11px;color:var(--accent-orange);font-weight:bold;margin-bottom:4px;">已激活事件</div>
+          <div id="activeEvents"><!-- Filled by JS --></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Center Row 2: Territory & Map (NEW) -->
+    <div class="panel territory-panel" id="territoryPanel">
+      <div class="panel-title">领土与地图</div>
+      <div class="panel-body">
+        <div id="territoryStats"></div>
+        <div id="knownWorld" style="margin-top:4px;"></div>
+        <div id="outerContacts" style="margin-top:4px;"></div>
+        <div id="cropsSection" style="margin-top:4px;"></div>
+        <div style="margin-top:4px;">
+          <div style="font-size:11px;color:var(--accent-gold);font-weight:bold;margin-bottom:4px;">区域控制</div>
+          <div class="territory-grid" id="territoryGrid"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Center Row 3: Characters & Factions -->
+    <div class="panel relations-panel" id="relationsPanel">
+      <div class="panel-title">人物与势力</div>
+      <div class="panel-body">
+        <div class="char-grid" id="charGrid">
+          <!-- Filled by JS -->
+        </div>
+        <div class="faction-section" id="factionSection">
+          <!-- Filled by JS -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: Event Log -->
+    <div class="panel event-panel" id="eventPanel">
+      <div class="panel-title">回合记录</div>
+      <div class="panel-body" id="eventLogBody">
+        <!-- Filled by JS -->
+      </div>
+    </div>
+
+    <!-- GM Panel (hidden by default) -->
+    <div class="panel gm-panel" id="gmPanel">
+      <div class="panel-title" style="background:rgba(142,68,173,0.15);color:var(--accent-purple);">GM 全局视角</div>
+      <div class="gm-grid" id="gmGrid">
+        <!-- Filled by JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer: State Changes -->
+  <div class="footer">
+    <div class="state-changes" id="stateChanges">
+      <span style="color:var(--text-dim);">等待数据...</span>
+    </div>
+    <div id="lastUpdate" style="color:var(--text-dim);">--</div>
+  </div>
+</div>
+
+<script>
+(function() {
+  "use strict";
+
+  var POLL_INTERVAL = 3000;
+  var stateFile = "state.json";
+  var currentView = "player";
+  var prevState = null;
+
+  // ===== Data Loading =====
+  function loadState() {
+    fetch(stateFile + "?t=" + Date.now())
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        prevState = data;
+        render(data);
+        document.getElementById("lastUpdate").textContent = "更新: " + new Date().toLocaleTimeString();
+      })
+      .catch(function(e) {
+        console.warn("Failed to load state:", e);
+      });
+  }
+
+  // ===== View Switching =====
+  var gmHoldTimer = null;
+
+  function applyView(view) {
+    currentView = view;
+    var btns = document.querySelectorAll(".view-btn");
+    btns.forEach(function(b) { b.classList.toggle("active", b.dataset.view === view); });
+
+    var gmPanel = document.getElementById("gmPanel");
+    var playerPanels = ["protagonistPanel", "domainPanel", "territoryPanel", "relationsPanel", "eventPanel"];
+
+    if (view === "gm") {
+      gmPanel.classList.add("visible");
+      playerPanels.forEach(function(id) {
+        var el = document.getElementById(id);
+        if (el) el.style.display = "none";
+      });
+    } else {
+      gmPanel.classList.remove("visible");
+      playerPanels.forEach(function(id) {
+        var el = document.getElementById(id);
+        if (el) el.style.display = "";
+      });
+    }
+
+    if (prevState) render(prevState);
+  }
+
+  window.switchView = function(view) {
+    applyView(view);
+  };
+
+  // GM button: long-press 3s to activate
+  (function() {
+    var gmBtn = document.getElementById("gmSwitchBtn");
+    if (!gmBtn) return;
+
+    function startHold(e) {
+      e.preventDefault();
+      gmBtn.classList.add("holding");
+      // Force reflow so transition triggers
+      void gmBtn.querySelector(".gm-progress").offsetWidth;
+      gmBtn.querySelector(".gm-progress").style.width = "100%";
+      gmHoldTimer = setTimeout(function() {
+        gmBtn.classList.remove("holding");
+        gmBtn.querySelector(".gm-progress").style.width = "0%";
+        gmBtn.querySelector(".gm-progress").style.transition = "none";
+        applyView("gm");
+      }, 3000);
+    }
+
+    function cancelHold() {
+      if (gmHoldTimer) { clearTimeout(gmHoldTimer); gmHoldTimer = null; }
+      gmBtn.classList.remove("holding");
+      var prog = gmBtn.querySelector(".gm-progress");
+      prog.style.transition = "none";
+      prog.style.width = "0%";
+    }
+
+    gmBtn.addEventListener("mousedown", startHold);
+    gmBtn.addEventListener("touchstart", startHold);
+    gmBtn.addEventListener("mouseup", cancelHold);
+    gmBtn.addEventListener("mouseleave", cancelHold);
+    gmBtn.addEventListener("touchend", cancelHold);
+    gmBtn.addEventListener("touchcancel", cancelHold);
+  })();
+
+  // ===== Renderers =====
+  function render(data) {
+    renderHeader(data.meta, data.world);
+    renderProtagonist(data.protagonist);
+    renderDomains(data.world.domains);
+    renderActiveEvents(data.world.active_events);
+    renderTerritory(data);
+    renderCharacters(data.characters, data.factions);
+    renderFactionDetail(data.factions);
+    renderEventLog(data.turn_log);
+    renderFooter(data.turn_log);
+    if (currentView === "gm") renderGM(data);
+  }
+
+  function renderHeader(meta, world) {
+    if (meta.sim_name) {
+      document.getElementById("simTitle").textContent = meta.sim_name;
+      document.title = meta.sim_name + " - 仪表盘";
+    }
+    document.getElementById("dateDisplay").textContent =
+      (meta.current_date || "--") + " | " + (meta.season || "--");
+    document.getElementById("turnCounter").textContent =
+      "回合 " + (meta.current_turn || 0);
+    var wb = document.getElementById("weatherBadge");
+    var w = world.weather || {};
+    var cp = w.climate_pressure || {};
+    var cpVal = cp.value || 0;
+    var cpMax = cp.max || 100;
+    var cpPct = Math.min(100, Math.max(0, (cpVal / cpMax) * 100));
+    var cpCls = cpPct > 60 ? "fill-red" : cpPct > 30 ? "fill-yellow" : "fill-green";
+    wb.innerHTML = esc(w.current || "--") + (w.anomaly ? " | " + esc(w.anomaly) : "") +
+      (cpVal > 0 ? ' <span style="margin-left:8px;font-size:9px;color:var(--text-dim);">气候压力</span>' +
+      ' <span class="climate-bar"><span class="climate-bar-fill ' + cpCls +
+      '" style="width:' + cpPct + '%"></span></span>' +
+      ' <span style="font-size:10px;color:var(--text-secondary);font-weight:bold;">' + cpVal + '</span>' : '');
+  }
+
+  function renderProtagonist(p) {
+    if (!p) return;
+    var html = "";
+    html += '<div class="protag-name">' + esc(p.name) + '</div>';
+    html += '<div class="protag-identity">' + esc(p.identity) + '</div>';
+    html += '<div class="protag-location">' + esc(p.location) + '</div>';
+    html += '<div class="protag-resources">' + esc(p.available_resources) + '</div>';
+
+    var s = p.status || {};
+    html += statusBar("威望", s.prestige);
+    html += statusBar("健康", s.health);
+
+    html += '<div class="knowledge-section">';
+    var k = p.knowledge || {};
+    html += knowledgeBlock("已知", k.known, "cat-known");
+    html += knowledgeBlock("怀疑", k.suspected, "cat-suspected");
+    html += knowledgeBlock("流言", k.unverified_rumors, "cat-rumor");
+    if (currentView === "gm" && k.unknowns && k.unknowns.length) {
+      html += knowledgeBlock("未知(GM)", k.unknowns, "cat-unknown");
+    }
+    html += '</div>';
+
+    document.getElementById("protagonistBody").innerHTML = html;
+  }
+
+  function statusBar(label, obj) {
+    if (!obj) return "";
+    var v = obj.value || 0;
+    var m = obj.max || 100;
+    var pct = Math.min(100, Math.max(0, (v / m) * 100));
+    var cls = pct > 60 ? "fill-green" : pct > 30 ? "fill-yellow" : "fill-red";
+    return '<div class="status-bar-group">' +
+      '<div class="status-bar-label"><span class="label">' + esc(obj.label || label) +
+      '</span><span class="value">' + v + '/' + m + '</span></div>' +
+      '<div class="status-bar-track"><div class="status-bar-fill ' + cls +
+      '" style="width:' + pct + '%"></div></div></div>';
+  }
+
+  function knowledgeBlock(title, items, cls) {
+    if (!items || !items.length) return "";
+    var html = '<div class="knowledge-category"><div class="knowledge-cat-title ' +
+      cls + '">' + title + ' (' + items.length + ')</div>';
+    items.forEach(function(item) {
+      html += '<div class="knowledge-item">' + esc(typeof item === "string" ? item : item.content || "") + '</div>';
+    });
+    return html + '</div>';
+  }
+
+  function renderDomains(domains) {
+    if (!domains) return;
+    var html = "";
+    var groups = [
+      { key: "politics", title: "朝局", fill: "fill-blue" },
+      { key: "finance", title: "财政", fill: "fill-teal" },
+      { key: "military", title: "军事", fill: "fill-red" },
+      { key: "public", title: "民情", fill: "fill-yellow" }
+    ];
+    groups.forEach(function(g) {
+      var d = domains[g.key];
+      if (!d) return;
+      html += '<div class="domain-card"><div class="domain-card-title">' + g.title + '</div>';
+      Object.keys(d).forEach(function(field) {
+        html += domainBar(d[field], g.fill);
+      });
+      html += '</div>';
+    });
+    document.getElementById("domainGrid").innerHTML = html;
+  }
+
+  function domainBar(obj, fillClass) {
+    if (!obj || typeof obj.value === "undefined") return "";
+    var v = obj.value || 0;
+    var m = obj.max || 100;
+    var pct = Math.min(100, Math.max(0, (v / m) * 100));
+    return '<div class="domain-field">' +
+      '<div class="status-bar-label"><span class="label">' + esc(obj.label || "") +
+      '</span><span class="value">' + v + '</span></div>' +
+      '<div class="status-bar-track"><div class="status-bar-fill ' + fillClass +
+      '" style="width:' + pct + '%"></div></div></div>';
+  }
+
+  function renderActiveEvents(events) {
+    if (!events || !events.length) {
+      document.getElementById("activeEvents").innerHTML =
+        '<div style="font-size:11px;color:var(--text-dim);">暂无活跃事件</div>';
+      return;
+    }
+    var html = "";
+    events.forEach(function(e) {
+      html += '<div class="event-active">' +
+        '<div class="event-name">' + esc(e.name) + '</div>' +
+        '<div class="event-status">' + esc(e.status) +
+        (currentView === "gm" && e.next_trigger ? ' <span style="color:var(--accent-purple);font-size:10px;">| 触发: ' + esc(e.next_trigger) + '</span>' : '') +
+        '</div></div>';
+    });
+    document.getElementById("activeEvents").innerHTML = html;
+  }
+
+  // ===== Territory & Map Renderer =====
+  function renderTerritory(data) {
+    var territory = data.territory || {};
+    var knownWorld = data.known_world || {};
+    var worldCrops = data.world_crops || {};
+    var isGM = currentView === "gm";
+
+    // 1. Global territory stats (border conflict, supply line)
+    var statsHtml = "";
+    if (territory.border_conflict_heat) {
+      statsHtml += '<div style="display:inline-block;margin-right:8px;">' +
+        statusBar("边境冲突", territory.border_conflict_heat) + '</div>';
+    }
+    if (territory.supply_line_status) {
+      statsHtml += '<div style="display:inline-block;">' +
+        statusBar("补给线", territory.supply_line_status) + '</div>';
+    }
+    document.getElementById("territoryStats").innerHTML = statsHtml ||
+      '<div style="font-size:10px;color:var(--text-dim);">暂无领土数据</div>';
+
+    // 2. Known world section
+    var kwHtml = "";
+    var scopeLabels = { regional: "区域", national: "全国", continental: "大陆", expanding: "扩张中" };
+    kwHtml += '<div class="kw-section">' +
+      '<span style="font-size:10px;color:var(--text-secondary);">已知世界:</span>' +
+      '<span class="kw-badge">' + esc(scopeLabels[knownWorld.scope_level] || knownWorld.scope_level || "--") + '</span>';
+    if (knownWorld.expansion_progress) {
+      var ep = knownWorld.expansion_progress;
+      var epPct = Math.min(100, Math.max(0, ((ep.value || 0) / (ep.max || 100)) * 100));
+      kwHtml += '<span style="font-size:9px;color:var(--text-dim);">' + esc(ep.label || "扩展") + '</span>' +
+        '<span class="climate-bar"><span class="climate-bar-fill fill-blue" style="width:' + epPct + '%"></span></span>' +
+        '<span style="font-size:9px;color:var(--text-dim);">' + (ep.value || 0) + '/' + (ep.max || 100) + '</span>';
+    }
+    if (isGM && knownWorld.unexplored_adjacent && knownWorld.unexplored_adjacent.length) {
+      kwHtml += '<span style="font-size:9px;color:var(--accent-red);"> 未探明: ' +
+        knownWorld.unexplored_adjacent.map(esc).join(", ") + '</span>';
+    }
+    kwHtml += '</div>';
+    document.getElementById("knownWorld").innerHTML = kwHtml;
+
+    // 3. Outer world contacts
+    var contacts = worldCrops.outer_world_contacts || [];
+    var visibleContacts = isGM ? contacts : contacts.filter(function(c) { return c.contact_status !== "unknown"; });
+    var contactsHtml = "";
+    if (visibleContacts.length) {
+      contactsHtml += '<div style="font-size:10px;color:var(--accent-teal);font-weight:bold;margin-bottom:2px;">外部接触</div>';
+      visibleContacts.forEach(function(c) {
+        var csClass = "cs-" + (c.contact_status || "unknown");
+        contactsHtml += '<div class="contact-card">' +
+          '<span class="contact-name">' + esc(c.zone_name || c.zone_id) + '</span> ' +
+          '<span class="contact-status ' + csClass + '">' + esc(c.contact_status) + '</span>';
+        if (c.access_via) contactsHtml += ' <span style="color:var(--text-dim);">via ' + esc(c.access_via) + '</span>';
+        if (c.available_crops && c.available_crops.length) {
+          contactsHtml += '<div style="margin-top:1px;">' + c.available_crops.map(function(cr) {
+            return '<span class="crop-tag">' + esc(cr) + '</span>';
+          }).join("") + '</div>';
+        }
+        if (c.trade_difficulty) {
+          var td = c.trade_difficulty;
+          var tdCls = td > 7 ? "fill-red" : td > 4 ? "fill-yellow" : "fill-green";
+          contactsHtml += ' <span style="font-size:9px;">贸易难度:</span>' +
+            '<span class="climate-bar"><span class="climate-bar-fill ' + tdCls + '" style="width:' + (td * 10) + '%"></span></span>';
+        }
+        contactsHtml += '</div>';
+      });
+    }
+    document.getElementById("outerContacts").innerHTML = contactsHtml;
+
+    // 4. Available crops
+    var crops = worldCrops.available_crops || [];
+    var cropsHtml = "";
+    if (crops.length) {
+      cropsHtml += '<div style="font-size:10px;color:var(--accent-teal);font-weight:bold;margin-bottom:2px;">可用作物</div><div>';
+      crops.forEach(function(cr) { cropsHtml += '<span class="crop-tag">' + esc(cr) + '</span>'; });
+      cropsHtml += '</div>';
+    }
+    document.getElementById("cropsSection").innerHTML = cropsHtml;
+
+    // 5. Region cards
+    var regions = territory.regions || [];
+    var visibleRegions = isGM ? regions : regions.filter(function(r) { return r.visibility !== "unknown"; });
+    if (!isGM && visibleRegions.length > 20) visibleRegions = visibleRegions.slice(0, 20);
+    var rHtml = "";
+    if (visibleRegions.length) {
+      visibleRegions.forEach(function(r) {
+        var cs = r.control_strength || 0;
+        var level = cs >= 0.8 ? "firm" : cs >= 0.5 ? "stable" : cs >= 0.3 ? "loose" : cs >= 0.1 ? "nominal" : "lost";
+        var vis = r.visibility || "full";
+        var visClass = "vis-" + vis;
+        var barPct = Math.min(100, Math.max(0, cs * 100));
+        var barCls = cs >= 0.8 ? "fill-green" : cs >= 0.5 ? "fill-blue" : cs >= 0.3 ? "fill-yellow" : cs >= 0.1 ? "fill-orange" : "fill-red";
+
+        rHtml += '<div class="region-card ' + level + (vis === "unknown" ? " unknown" : "") + '">';
+        rHtml += '<div class="region-name">' + esc(r.name || r.region_id);
+        if (isGM) rHtml += ' <span class="visibility-tag ' + visClass + '">' + esc(vis) + '</span>';
+        rHtml += '</div>';
+        rHtml += '<div class="region-controller">' + esc(r.controller || "无主") + (isGM ? ' [' + esc(level) + ']' : '') + '</div>';
+        rHtml += '<div class="region-bar-track"><div class="region-bar-fill ' + barCls + '" style="width:' + barPct + '%"></div></div>';
+        rHtml += '<div class="region-field"><span>驻军 ' + (r.garrison || 0) + '</span><span>民心 ' + (r.local_loyalty || 0) + '</span></div>';
+        rHtml += '</div>';
+      });
+    }
+    document.getElementById("territoryGrid").innerHTML = rHtml ||
+      '<div style="font-size:11px;color:var(--text-dim);">暂无已知区域</div>';
+  }
+
+  // ===== Faction Detail Renderer =====
+  function renderFactionDetail(factions) {
+    if (!factions || !factions.length) {
+      document.getElementById("factionSection").innerHTML = "";
+      return;
+    }
+    var html = '<div class="faction-section-title">势力详情</div>';
+    html += '<div class="faction-grid">';
+
+    factions.forEach(function(f) {
+      var att = (f.attitude_to_protagonist || "").toLowerCase();
+      var cls = att.indexOf("友") >= 0 || att.indexOf("friendly") >= 0 ? "friendly" :
+                att.indexOf("敌") >= 0 || att.indexOf("hostile") >= 0 ? "hostile" : "neutral";
+      html += '<div class="faction-detail-card ' + cls + '">';
+      html += '<div class="faction-detail-name">' + esc(f.name) + (f.type ? ' [' + esc(f.type) + ']' : '') + '</div>';
+      html += '<div class="faction-detail-info">' + esc(f.representative || "");
+      if (f.core_resources) html += ' | ' + esc(f.core_resources);
+      html += '</div>';
+      if (f.current_goal) html += '<div class="faction-detail-info">目标: ' + esc(f.current_goal) + '</div>';
+      if (f.controlled_regions && f.controlled_regions.length) {
+        html += '<div class="faction-detail-regions">控制: ' + f.controlled_regions.map(esc).join(", ") + '</div>';
+      }
+      // Relationships
+      var rels = f.relationships || [];
+      if (rels.length) {
+        html += '<div style="margin-top:2px;">';
+        rels.forEach(function(r) {
+          var relType = (r.type || "").toLowerCase();
+          var relCls = relType === "ally" || relType.indexOf("盟") >= 0 ? "rel-ally" :
+                       relType === "hostile" || relType.indexOf("敌") >= 0 ? "rel-hostile" :
+                       relType === "rival" || relType.indexOf("竞争") >= 0 ? "rel-rival" : "rel-neutral";
+          html += '<span class="faction-rel-item ' + relCls + '">' + esc(r.with) + ':' + esc(r.type) + '</span>';
+        });
+        html += '</div>';
+      }
+      html += '</div>';
+    });
+
+    html += '</div>';
+    document.getElementById("factionSection").innerHTML = html;
+  }
+
+  function renderCharacters(chars, factions) {
+    if (!chars || !chars.length) {
+      document.getElementById("charGrid").innerHTML =
+        '<div style="color:var(--text-dim);font-size:12px;">暂无人物数据</div>';
+      return;
+    }
+    var visible = currentView === "gm" ? chars : chars.filter(function(c) { return c.player_visible !== false; });
+    var html = "";
+    visible.forEach(function(c) {
+      var att = (c.attitude || "").toLowerCase();
+      var cls = att.indexOf("友") >= 0 || att.indexOf("friendly") >= 0 ? "friendly" :
+                att.indexOf("敌") >= 0 || att.indexOf("hostile") >= 0 ? "hostile" : "neutral";
+      html += '<div class="char-card ' + cls + '">' +
+        '<div class="char-name">' + esc(c.name) + '</div>' +
+        '<div class="char-identity">' + esc(c.identity) + '</div>' +
+        '<div class="char-faction">' + esc(c.faction) + '</div>' +
+        (c.stance ? '<div class="char-stance">' + esc(c.stance) + '</div>' : '') +
+        (c.recent_action_hint ? '<div class="char-action-hint">' + esc(c.recent_action_hint) + '</div>' : '') +
+        '</div>';
+    });
+    document.getElementById("charGrid").innerHTML = html;
+  }
+
+  function renderEventLog(log) {
+    if (!log || !log.length) {
+      document.getElementById("eventLogBody").innerHTML =
+        '<div style="color:var(--text-dim);font-size:12px;">暂无回合记录</div>';
+      return;
+    }
+    var sorted = log.slice().reverse();
+    var html = "";
+    sorted.forEach(function(entry) {
+      html += '<div class="event-entry">' +
+        '<div class="event-turn">回合 ' + entry.turn + '</div>' +
+        '<div class="event-date">' + esc(entry.date || "") +
+        (entry.location ? " | " + esc(entry.location) : "") +
+        (entry.weather ? " | " + esc(entry.weather) : "") + '</div>' +
+        '<div class="event-summary">' + esc(entry.result_summary || "") + '</div>';
+
+      var nk = entry.new_knowledge;
+      if (nk && nk.length) {
+        html += '<div class="event-knowledge">';
+        nk.forEach(function(k) {
+          var src = k.source || "";
+          var cls = intelClass(src);
+          html += '<span class="event-intel ' + cls + '">' +
+            esc(typeof k === "string" ? k : k.content || "") + '</span> ';
+        });
+        html += '</div>';
+      }
+      html += '</div>';
+    });
+    document.getElementById("eventLogBody").innerHTML = html;
+  }
+
+  function intelClass(source) {
+    var s = (source || "").toLowerCase();
+    if (s.indexOf("亲") >= 0 || s.indexOf("witness") >= 0) return "intel-witness";
+    if (s.indexOf("密") >= 0 || s.indexOf("spy") >= 0 || s.indexOf("secret") >= 0) return "intel-spy";
+    if (s.indexOf("流") >= 0 || s.indexOf("rumor") >= 0) return "intel-rumor";
+    return "intel-report";
+  }
+
+  function renderFooter(log) {
+    if (!log || !log.length) return;
+    var latest = log[log.length - 1];
+    var changes = latest.state_changes || {};
+    var html = "";
+    if (typeof changes === "object" && Object.keys(changes).length) {
+      Object.keys(changes).forEach(function(domain) {
+        var fields = changes[domain];
+        if (typeof fields === "object") {
+          Object.keys(fields).forEach(function(f) {
+            var val = fields[f];
+            var cls = typeof val === "number" ? (val > 0 ? "change-up" : val < 0 ? "change-down" : "change-neutral") : "change-neutral";
+            html += '<span class="change-item"><span class="' + cls + '">' +
+              (typeof val === "number" && val > 0 ? "+" : "") + esc(String(val)) +
+              '</span> ' + esc(f) + '</span>';
+          });
+        } else {
+          html += '<span class="change-item">' + esc(domain) + ': ' + esc(String(fields)) + '</span>';
+        }
+      });
+    }
+    document.getElementById("stateChanges").innerHTML = html ||
+      '<span style="color:var(--text-dim);">本回合无状态变化</span>';
+  }
+
+  // ===== GM Renderer =====
+  function renderGM(data) {
+    var html = "";
+
+    // Private Ledgers
+    var ledgers = (data.gm_only || {}).private_ledgers || [];
+    if (ledgers.length) {
+      ledgers.forEach(function(l) {
+        html += '<div class="gm-card"><div class="gm-card-title" onclick="toggleGmCard(this)">' +
+          esc(l.holder) + ' (' + esc(l.holder_type || "person") + ') - ' + esc(l.date || "") + '</div>' +
+          '<div class="gm-card-content">';
+
+        var actions = l.covert_actions || [];
+        if (actions.length) {
+          html += '<div style="margin-bottom:4px;"><span class="gm-tier-label">秘密行动:</span>';
+          actions.forEach(function(a) {
+            html += '<div><span class="gm-actor">' + esc(a.action) + '</span>' +
+              ' -> ' + esc(a.target || "") +
+              ' = <span class="gm-result">' + esc(a.actual_result || "") + '</span></div>';
+          });
+          html += '</div>';
+        }
+
+        var intel = l.known_intel || {};
+        if (intel.confirmed && intel.confirmed.length) {
+          html += '<div style="margin-bottom:2px;"><span class="gm-tier-label tier-public">确认:</span> ' +
+            intel.confirmed.map(esc).join("; ") + '</div>';
+        }
+        if (intel.inferred && intel.inferred.length) {
+          html += '<div style="margin-bottom:2px;"><span class="gm-tier-label tier-faction">推测:</span> ' +
+            intel.inferred.map(esc).join("; ") + '</div>';
+        }
+        if (intel.wrong_judgments && intel.wrong_judgments.length) {
+          html += '<div style="margin-bottom:2px;"><span class="gm-tier-label tier-global">误判:</span> ' +
+            intel.wrong_judgments.map(esc).join("; ") + '</div>';
+        }
+
+        var cover = l.cover || {};
+        if (cover.method) {
+          html += '<div style="margin-bottom:2px;font-size:10px;color:var(--text-dim);">掩盖: ' + esc(cover.method) +
+            ' | 已告知: ' + (cover.already_told || []).map(esc).join(", ") +
+            ' | 未告知: ' + (cover.not_yet_told || []).map(esc).join(", ") + '</div>';
+        }
+
+        var conditions = l.exposure_conditions || [];
+        if (conditions.length) {
+          html += '<div style="margin-top:4px;">曝光条件:';
+          conditions.forEach(function(c) {
+            html += '<div class="gm-condition">若 ' + esc(c.condition) + ' 则对 ' + esc(c.expose_to) + ' 暴露</div>';
+          });
+          html += '</div>';
+        }
+
+        html += '</div></div>';
+      });
+    }
+
+    // Hidden Actions
+    var hidden = (data.gm_only || {}).hidden_actions || [];
+    if (hidden.length) {
+      html += '<div class="gm-card"><div class="gm-card-title" onclick="toggleGmCard(this)">隐藏行动 (' + hidden.length + ')</div>' +
+        '<div class="gm-card-content"><ul class="gm-hidden-list">';
+      hidden.forEach(function(h) {
+        html += '<li class="gm-hidden-item"><span class="gm-actor">' + esc(h.actor) + '</span>: ' +
+          esc(h.action) + ' -> ' + esc(h.target || "") +
+          ' [' + esc(h.status || "") + ']</li>';
+      });
+      html += '</ul></div></div>';
+    }
+
+    // Global Truth Events
+    var truths = (data.gm_only || {}).global_truth_events || [];
+    if (truths.length) {
+      html += '<div class="gm-card"><div class="gm-card-title" onclick="toggleGmCard(this)">全局真相事件 (' + truths.length + ')</div>' +
+        '<div class="gm-card-content">';
+      truths.forEach(function(t) {
+        html += '<div style="margin-bottom:4px;"><span class="gm-truth-tier tier-global">global_truth</span>' +
+          '<strong>' + esc(t.event) + '</strong> (' + esc(t.date || "") + ')' +
+          '<div style="font-size:10px;color:var(--text-dim);">可见: ' + (t.visible_to || []).map(esc).join(", ") +
+          ' | 不可见: ' + (t.not_yet_visible_to || []).map(esc).join(", ") + '</div></div>';
+      });
+      html += '</div></div>';
+    }
+
+    // Exposure Tracking
+    var exposures = (data.gm_only || {}).exposure_tracking || [];
+    if (exposures.length) {
+      html += '<div class="gm-card"><div class="gm-card-title" onclick="toggleGmCard(this)">曝光条件追踪 (' + exposures.length + ')</div>' +
+        '<div class="gm-card-content">';
+      exposures.forEach(function(e) {
+        var metClass = e.exposure_conditions_met ? "gm-exposure-met" : "";
+        html += '<div style="margin-bottom:3px;" class="' + metClass + '">' +
+          esc(e.secret) +
+          ' | 持有者: ' + (e.holders || []).map(esc).join(", ") +
+          ' | 条件满足: ' + (e.exposure_conditions_met ? "YES" : "NO") +
+          (e.partial_leaks_to && e.partial_leaks_to.length ?
+            ' | 部分泄漏至: ' + e.partial_leaks_to.map(esc).join(", ") : '') +
+          '</div>';
+      });
+      html += '</div></div>';
+    }
+
+    // Event Engine with trigger conditions (GM only)
+    var activeEvents = (data.world && data.world.active_events) || [];
+    if (activeEvents.length) {
+      html += '<div class="gm-card"><div class="gm-card-title" onclick="toggleGmCard(this)">事件引擎 (' + activeEvents.length + ')</div>' +
+        '<div class="gm-card-content">';
+      activeEvents.forEach(function(ev) {
+        html += '<div style="margin-bottom:4px;padding-bottom:3px;border-bottom:1px solid rgba(142,68,173,0.2);">' +
+          '<strong>' + esc(ev.name) + '</strong> ' +
+          '<span style="color:' + (ev.status === "已完成" ? "var(--accent-green)" : ev.status === "酝酿中" ? "var(--warning)" : "var(--text-secondary)") + ';">' +
+          esc(ev.status) + '</span>' +
+          (ev.next_trigger ? ' <span style="color:var(--accent-purple);font-size:10px;">| 触发条件: ' + esc(ev.next_trigger) + '</span>' : '') +
+          '</div>';
+      });
+      html += '</div></div>';
+    }
+
+    // Full Character Info (GM sees all)
+    var chars = data.characters || [];
+    if (chars.length) {
+      html += '<div class="gm-card"><div class="gm-card-title" onclick="toggleGmCard(this)">完整人物信息 (' + chars.length + ')</div>' +
+        '<div class="gm-card-content">';
+      chars.forEach(function(c) {
+        var vis = c.player_visible !== false ? "tier-player" : "tier-global";
+        html += '<div style="margin-bottom:6px;padding-bottom:4px;border-bottom:1px solid rgba(142,68,173,0.2);">' +
+          '<span class="gm-truth-tier ' + vis + '">' + (c.player_visible !== false ? "可见" : "隐藏") + '</span>' +
+          '<strong>' + esc(c.name) + '</strong> ' + esc(c.identity) +
+          ' | 阵营: ' + esc(c.faction) +
+          ' | 态度: ' + esc(c.attitude) +
+          (c.public_goal ? ' | 目标: ' + esc(c.public_goal) : '') +
+          '</div>';
+      });
+      html += '</div></div>';
+    }
+
+    // Full Territory Info (GM only)
+    var territory = data.territory || {};
+    var regions = territory.regions || [];
+    if (regions.length) {
+      html += '<div class="gm-card"><div class="gm-card-title" onclick="toggleGmCard(this)">完整领土信息 (' + regions.length + ')</div>' +
+        '<div class="gm-card-content">';
+      var levelNames = { firm: "牢固", stable: "稳定", loose: "松散", nominal: "名义", lost: "失控" };
+      regions.forEach(function(r) {
+        var cs = r.control_strength || 0;
+        var level = cs >= 0.8 ? "firm" : cs >= 0.5 ? "stable" : cs >= 0.3 ? "loose" : cs >= 0.1 ? "nominal" : "lost";
+        var vis = r.visibility || "full";
+        html += '<div style="margin-bottom:4px;padding-bottom:3px;border-bottom:1px solid rgba(142,68,173,0.2);">' +
+          '<strong>' + esc(r.name || r.region_id) + '</strong>' +
+          ' | 控制: ' + esc(r.controller || "无主") +
+          ' [' + esc(levelNames[level] || level) + ' ' + cs.toFixed(2) + ']' +
+          ' | 驻军: ' + (r.garrison || 0) +
+          ' | 民心: ' + (r.local_loyalty || 0) +
+          ' | 可见: ' + esc(vis) +
+          '</div>';
+      });
+      html += '</div></div>';
+    }
+
+    // Full Faction Relationship Matrix (GM only)
+    var factions = data.factions || [];
+    if (factions.length) {
+      html += '<div class="gm-card"><div class="gm-card-title" onclick="toggleGmCard(this)">完整势力关系矩阵 (' + factions.length + ')</div>' +
+        '<div class="gm-card-content">';
+      factions.forEach(function(f) {
+        html += '<div style="margin-bottom:6px;padding-bottom:4px;border-bottom:1px solid rgba(142,68,173,0.2);">' +
+          '<strong style="color:var(--accent-purple);">' + esc(f.name) + '</strong> [' + esc(f.type || "") + ']' +
+          ' | 代表: ' + esc(f.representative || "") +
+          ' | 态度: ' + esc(f.attitude_to_protagonist || "") +
+          '</div>';
+        var rels = f.relationships || [];
+        if (rels.length) {
+          rels.forEach(function(r) {
+            html += '<div style="font-size:10px;padding-left:8px;">' +
+              '-> ' + esc(r.with) + ': <strong>' + esc(r.type) + '</strong>' +
+              (r.tension_source ? ' | 张力: ' + esc(r.tension_source) : '') +
+              (r.near_term_risk ? ' | 风险: ' + esc(r.near_term_risk) : '') +
+              (r.disputed_regions && r.disputed_regions.length ? ' | 争议: ' + r.disputed_regions.map(esc).join(", ") : '') +
+              '</div>';
+          });
+        }
+      });
+      html += '</div></div>';
+    }
+
+    // Full Crops & Outer World (GM only)
+    var worldCrops = data.world_crops || {};
+    var allCrops = worldCrops.available_crops || [];
+    var introLog = worldCrops.crop_introduction_log || [];
+    var allContacts = worldCrops.outer_world_contacts || [];
+    var cropItems = allCrops.length + introLog.length + allContacts.length;
+    if (cropItems > 0) {
+      html += '<div class="gm-card"><div class="gm-card-title" onclick="toggleGmCard(this)">完整物产与外部世界 (' + cropItems + ')</div>' +
+        '<div class="gm-card-content">';
+      if (allCrops.length) {
+        html += '<div style="margin-bottom:4px;"><span style="color:var(--accent-teal);font-weight:bold;">可用作物:</span> ' +
+          allCrops.map(function(cr) { return '<span class="crop-tag">' + esc(cr) + '</span>'; }).join("") + '</div>';
+      }
+      if (introLog.length) {
+        html += '<div style="margin-bottom:4px;"><span style="color:var(--accent-teal);font-weight:bold;">引入记录:</span>';
+        introLog.forEach(function(l) {
+          html += '<div style="font-size:10px;padding-left:8px;">' +
+            esc(l.crop) + ' | ' + esc(l.introduced_date || "未引入") +
+            ' | 渠道: ' + esc(l.acquisition_channel || "无") +
+            ' | 状态: ' + esc(l.spread_status || "无") +
+            (l.yield_modifier ? ' | 产量: x' + l.yield_modifier : '') +
+            '</div>';
+        });
+        html += '</div>';
+      }
+      if (allContacts.length) {
+        html += '<div><span style="color:var(--accent-teal);font-weight:bold;">外部区域:</span>';
+        allContacts.forEach(function(c) {
+          html += '<div style="font-size:10px;padding-left:8px;">' +
+            esc(c.zone_name || c.zone_id) + ' | 状态: ' + esc(c.contact_status) +
+            (c.access_via ? ' | 经由: ' + esc(c.access_via) : '') +
+            (c.available_crops && c.available_crops.length ? ' | 作物: ' + c.available_crops.map(esc).join(", ") : '') +
+            (c.available_resources && c.available_resources.length ? ' | 资源: ' + c.available_resources.map(esc).join(", ") : '') +
+            ' | 贸易难度: ' + (c.trade_difficulty || 0) +
+            '</div>';
+        });
+        html += '</div>';
+      }
+      html += '</div></div>';
+    }
+
+    document.getElementById("gmGrid").innerHTML = html ||
+      '<div style="color:var(--text-dim);font-size:12px;padding:8px;">gm_only 节点为空</div>';
+  }
+
+  window.toggleGmCard = function(el) {
+    el.classList.toggle("collapsed");
+  };
+
+  // ===== Utility =====
+  function esc(s) {
+    if (s === null || s === undefined) return "";
+    return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+
+  // ===== Init =====
+  loadState();
+  setInterval(loadState, POLL_INTERVAL);
+})();
+</script>
+
+</body>
+</html>
